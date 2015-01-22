@@ -24,6 +24,8 @@
                  intentos de descarga. En estos casos, los metodos downloadFNL y downloadGFS_HD en lugar de regresar el nombre
                  del archivo descargado, retornan None.
  10 Octu 2014  : Revision del codigo que descarga variables "getData" y cambios en el tipo de salida logging.
+
+ 22 Jan 2015   : Se cambio funcion downloadGFS_HD por getGFS, con extra parametro offset y s_dataset.
                  
 """
 __author__ =  'Favio Medrano'
@@ -654,7 +656,15 @@ class gfsData(gfsConfig):
                 return netcdfFilename
             
 
-            def downloadGFS_HD(self, s_dataset, gfs_hd_date=None,run_time=0,saveData=True):
+            def getGFS(self, s_dataset, gfs_hd_date=None, run_time=0, offset=-1, saveData=True):
+                """                  
+                 Descarga datos del dataset especificado en s_dataset (gfs_hd, gfs_0p25 o gfs_0p50), por default toda la dimension 
+                 temporal del dataset (today-1), runtime=00z.  
+                 El codigo recorre la dimension temporal del dataset, haciendo la descarga en pasos. 
+                  ---
+                 Recibe parametros opcionales gfs_hd_date (fecha tipo <python datetime>) que es la fecha del dataset del que se intentara hacer la descarga
+                 En el parametro run_time se especifica el dataset run_time, default 0, puede ser 0 , 6 , 12 , 18
+                """
                 """                  
                  Descarga datos del dataset especificado en s_dataset (gfs_hd, gfs_0p25 o gfs_0p50), por default toda la dimension 
                  temporal del dataset (today-1), runtime=00z.  
@@ -684,8 +694,11 @@ class gfsData(gfsConfig):
                 
                 if not (gfsTimeVar is None):                
                     # Definir espacios para variables a descargar
-                    lVars = self.getConfigValueVL('vars')                   
-                    dimTimeSize = gfsTimeVar.size
+                    lVars = self.getConfigValueVL('vars')   
+                    if (offset > 0) and (offset < gfsTimeVar.size):                
+                        dimTimeSize = offset
+                    else:
+                        dimTimeSize = gfsTimeVar.size 
                     varShape = [dimTimeSize, self.gridGFS_HD.jrange[1]-self.gridGFS_HD.jrange[0] , self.gridGFS_HD.irange[1]-self.gridGFS_HD.irange[0]]
                     log.debug('GFS_HD: var grid size: ' + str(varShape))
                     log.debug('GFS_HD: irange ' + str(self.gridGFS_HD.irange))
@@ -696,13 +709,14 @@ class gfsData(gfsConfig):
                         varlist[v] =  np.zeros( (varShape[0] , varShape[1], varShape[2]) )                
                         
                     for t in range(gfsTimeVar.size):
-                        for vn in range(len(lVars)):
-                            try:
-                                varlist[lVars[vn]][t,:,:] = self.getData(fname, lVars[vn], [t,t+1], self.gridGFS_HD.irange, self.gridGFS_HD.jrange)
-                                log.info('GFS_HD: Se descargo la variable ' + lVars[vn] + ', shape: '  + str(varlist[lVars[vn]][t,:,:].shape) + ' , Time step : ' + str(t)) 
-                            except Exception ,e:
-                                log.error('GFS_HD: Fallo la descarga de una seccion del dataset: ' + str(fname))
-                                return None
+                        if t < offset:
+                            for vn in range(len(lVars)):
+                                try:
+                                    varlist[lVars[vn]][t,:,:] = self.getData(fname, lVars[vn], [t,t+1], self.gridGFS_HD.irange, self.gridGFS_HD.jrange)
+                                    log.info('GFS_HD: Se descargo la variable ' + lVars[vn] + ', shape: '  + str(varlist[lVars[vn]][t,:,:].shape) + ' , Time step : ' + str(t)) 
+                                except Exception ,e:
+                                    log.error('GFS_HD: Fallo la descarga de una seccion del dataset: ' + str(fname))
+                                    return None
 
                     # Una vez descargados todas las variables en la lista de np.arrays varlist
                     # decidimos que hacer con la informacion, la regresamos o la salvamos. 
@@ -735,8 +749,9 @@ class gfsData(gfsConfig):
                         #TODO: Regresar las variables descargadas en formato python diccionario
                         pass              
 
-                return netcdfFilename
-             
+                return netcdfFilename                                
+
+
                 
                 
 
