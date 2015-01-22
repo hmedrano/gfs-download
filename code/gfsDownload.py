@@ -723,7 +723,7 @@ class gfsData(gfsConfig):
                             dataVars[lVars[vi]] =  {'dimensions': ['time','lat','lon'] , 'attributes' : {'units' : vUnit[vi], 'long_name' : vLN[vi] , '_FillValue' : 9.999e+20 } , 'dataType' : 'f4' } 
                         
                         myfile = netcdfFile()
-                        netcdfFilename = 'crudosGFS_HD_' + gfs_hd_date.strftime('%Y-%m-%d') + '_' + ("%02d"%run_time) + 'z.nc'
+                        netcdfFilename = 'crudos' + s_dataset.upper() + '_' + gfs_hd_date.strftime('%Y-%m-%d') + '_' + ("%02d"%run_time) + 'z.nc'
                         myfile.createFile(netcdfFilename)
                         myfile.createDims(dimsA)
                         myfile.createVars(dimVars)
