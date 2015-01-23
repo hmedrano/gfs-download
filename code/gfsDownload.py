@@ -709,7 +709,7 @@ class gfsData(gfsConfig):
                         varlist[v] =  np.zeros( (varShape[0] , varShape[1], varShape[2]) )                
                         
                     for t in range(gfsTimeVar.size):
-                        if t < offset:
+                        if (offset < 0) or (t < offset):
                             for vn in range(len(lVars)):
                                 try:
                                     varlist[lVars[vn]][t,:,:] = self.getData(fname, lVars[vn], [t,t+1], self.gridGFS_HD.irange, self.gridGFS_HD.jrange)
