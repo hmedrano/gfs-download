@@ -161,7 +161,7 @@ class netcdfFile():
         def closeFile(self):
             """
              Funcion que cierra el archivo netcdf, si es que ya se creo.
-             Agrega un atributo global "description" donde indica la fecha de creacion.
+             Agrega un atributo global "history" donde indica la fecha de creacion.
             """
             if self.fileHandler == None:
                 return -1
@@ -685,6 +685,9 @@ class gfsData(gfsConfig):
                 # Obtenemos el tamano de la malla de lo que vamos a descargar, por default los datos de la malla se obtienen del archivo de 
                 # configuracion
                 log.info('GFS_HD: Obteniendo el tamano de la malla GFS_HD del dataset: ' + str(fname))
+                if offset > 0:
+                    log.info('GFS_HD: Descargando hasta el registro: ' + str(offset))
+
                 self.gridGFS_HD.getGFSgrid_default(fname) 
                 try:
                     gfsTimeVar = self.getDataVector(fname, 'time')
@@ -699,7 +702,7 @@ class gfsData(gfsConfig):
                         dimTimeSize = offset
                     else:
                         dimTimeSize = gfsTimeVar.size 
-                    varShape = [dimTimeSize, self.gridGFS_HD.jrange[1]-self.gridGFS_HD.jrange[0] , self.gridGFS_HD.irange[1]-self.gridGFS_HD.irange[0]]
+                    varShape = [dimTimeSize, self.gridGFS_HD.jrange[1]-self.gridGFS_HD.jrange[0] , self.gridGFS_HD.irange[1]-self.gridGFS_HD.irange[0]]                    
                     log.debug('GFS_HD: var grid size: ' + str(varShape))
                     log.debug('GFS_HD: irange ' + str(self.gridGFS_HD.irange))
                     log.debug('GFS_HD: jrange ' + str(self.gridGFS_HD.jrange))
@@ -717,6 +720,9 @@ class gfsData(gfsConfig):
                                 except Exception ,e:
                                     log.error('GFS_HD: Fallo la descarga de una seccion del dataset: ' + str(fname))
                                     return None
+                        else: 
+                            log.info('GFS_HD: Downloading only at offset limit: ' + str(offset))
+                            break 
 
                     # Una vez descargados todas las variables en la lista de np.arrays varlist
                     # decidimos que hacer con la informacion, la regresamos o la salvamos. 
