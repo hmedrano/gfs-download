@@ -165,7 +165,7 @@ class netcdfFile():
             """
             if self.fileHandler == None:
                 return -1
-            self.fileHandler.history = 'File created ' + dt.datetime.today().strftime('%Y-%m-%d %I:%M:%S %p') + '.'
+            #self.fileHandler.history = 'File created ' + dt.datetime.today().strftime('%Y-%m-%d %I:%M:%S %p') + '.'
             self.fileHandler.close() 
             self.fileHandler = None
             self.fileName = None 
