@@ -5,7 +5,7 @@ import numpy as np
 import netCDF4 as nc
 import gfsDownload as gD
 import datetime as dt
-import notification
+# import notification
 
 """ 
  Script de ejecucion diario para la descarga de forzamientos meteorologicos de Nomads GFS.
@@ -16,22 +16,23 @@ import notification
  By Favio Medrano Julio 2014.
 """
 
-def failNotification():
-    msg = 'Fecha ' + str(sDirName) + '\nAlguno de los siguientes archivos no se generaron:\n' + fileFNL + '\n' + fileGFS + '\n'
-    log.warning('Enviando notificacion: ' + msg)
-    notification.send('Kanik2 GFS Download Status',msg)
+def failNotification(message='Fallo en la descarga'):
+    # TODO Add notification system
+    # msg = 'Fecha ' + str(sDirName) + '\nAlguno de los siguientes archivos no se generaron:\n' + fileFNL + '\n' + fileGFS + '\n'
+    log.warning('Enviando notificacion: ' + message)    
+    # notification.send('Kanik2 GFS Download Status',msg)
 
 def main():
 
-    sWorkingDir = '/LUSTRE/hmedrano/SCRIPTS/forzamientos/gfs-download/code'
-    sOutDir = '/LUSTRE/hmedrano/STOCK/FORCING-RAW/GFS_RAW'
+    sWorkingDir = './'
+    sOutDir = './'
     sLogFile = 'rawdownload.log'
 
     os.chdir(sWorkingDir)
-    log.basicConfig(filename=sLogFile, level=log.INFO,)
+    log.basicConfig(filename=sLogFile, level=log.DEBUG,)
 
     if len(sys.argv) > 1:
-        print sys.argv[1]
+        print (sys.argv[1])
         dToday = dt.datetime.strptime(sys.argv[1],'%Y%m%d')
     else:
         dToday = dt.datetime.today()

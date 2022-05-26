@@ -31,7 +31,7 @@
 __author__ =  'Favio Medrano'
 __version__=  '1.0'
 
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import os
 import logging as log
 import datetime as dt
@@ -131,13 +131,13 @@ class netcdfFile():
             if self.fileHandler != None:
                 log.warning('readFile: Actualmente se encuentre un archivo netcdf abierto : ' + self.fileName)
                 return None 
-            if os.path.getsize(os.path.join(path,filename)) > 100000000L:
+            if os.path.getsize(os.path.join(path,filename)) > 100000000:
                 log.warning('readFile: Archivo que se quiere leer es demasiado grande, para leerse completo.')
                 return None 
             
             try:
                 self.fileHandler = nc.Dataset(os.path.join(path,filename),'r')
-            except Exception, e:
+            except Exception as e:
                 log.warning('readFile: Se detecto un error al leer el archivo ' + filename)
                 log.warning('readFile: ' + str(e))
                 return None 
@@ -153,7 +153,7 @@ class netcdfFile():
             self.fileName = os.path.join(path,filename) 
             try:
                 self.fileHandler = nc.Dataset(filename,'w',filetype)   
-            except Exception, e:
+            except Exception as e:
                 log.warning('Se detecto un error al crear el archivo: ' + filename )
                 log.warning(str(e))
                 return -1
@@ -232,7 +232,7 @@ class netcdfFile():
                             else:
                                 log.warning('crateVars: Atributo ' + att + ', no es valido')
                         log.debug('createVars: Variable ' + v + ' , creada con todos sus atributos')
-                    except Exception, e:
+                    except Exception as e:
                         log.warning('createVars: Fallo al crear la variable : ' + v)
                         log.warning('createVars: Archivo netcdf: ' + self.fileName)
                         log.warning(str(e))
@@ -256,7 +256,7 @@ class netcdfFile():
                         varH = self.fileHandler.variables[v] 
                         varH[:] = varDataDict[v][:] 
                         log.debug('saveData: Exitoso!')        
-                    except Exception, e:
+                    except Exception as e:
                         log.warning('saveData: Fallo al intentar salvar datos en variable: ' + v)
                         log.warning('saveData: ' + str(e))
                         return -1   
@@ -277,7 +277,7 @@ class netcdfFile():
                 varH = self.fileHandler.variables[varName] 
                 varH[indexs] = data 
                 log.debug('saveDataS: Existoso!')
-            except Exception, e:
+            except Exception as e:
                 log.warning('saveDataS: Fallo al intentar salvar datos en variable: ' + varName)
                 log.warning('saveDataS: ' + str(e))
                 return -1
@@ -355,11 +355,24 @@ class gfsSubgrid(gfsConfig):
             lonmax=lonmax+dl
             latmin=latmin-dl
             latmax=latmax+dl
-            try:
-                dataset = nc.Dataset(fname,'r')
-            except Exception, e:
-                log.warning('getGFSgrid: No se encontro el dataset: ' + fname) 
-                log.warning('getGFSgrid: ' + str(e))
+            attemps=10
+            retrySeconds=10
+            dataset = None
+            for attemp in range(0,attemps):
+                try:
+                    dataset = nc.Dataset(fname,'r')
+                    break
+                except Exception as e:
+                    log.warning('getGFSgrid: No se encontro el dataset: ' + fname) 
+                    log.warning('getGFSgrid: ' + str(e))
+                    log.warning('getGFSgrid: Reintentando la descarga. attemp: ' + str(attemp) + ' en ' + str(retrySeconds) + 'seg.')
+                    if attemp > 3:
+                        # En los ultimos tres intentos dormir el proceso diez segundos
+                        time.sleep(retrySeconds)
+                        retrySeconds = retrySeconds + 5
+                        continue
+
+            if dataset is None:
                 return 0 
             
             lon = dataset.variables['lon'][:]
@@ -451,7 +464,7 @@ class gfsData(gfsConfig):
                     try:
                         dst = nc.Dataset(fname,'r')
                         foundfile=1
-                    except Exception, e:
+                    except Exception as e:
                         log.warning('Error al tratar de acceder al dataset: ' + str(e) )
                         foundfile=0
                     
@@ -474,20 +487,22 @@ class gfsData(gfsConfig):
                 """
                  Funcion que hace la conexion al dataset remoto fname, para descargar una variable 1D 
                 """    
-                # Por default 10 intentos para descargar datos                       
+                # Por default 10 intentos para descargar datos
+                retrySeconds = 10
                 for attemp in range(0,attemps):
                     try:
                         dst = nc.Dataset(fname,'r')
                         rawdata = dst.variables[var][:] 
                         dst.close()
                         return rawdata
-                    except Exception, e:
+                    except Exception as e:
                         log.warning('getDataVector: Fallo al acceder a los datos ' + fname + ', var: ' + var)
                         log.warning('getDataVector: Error: ' + str(e))
-                        log.warning('getDataVector: Reintentando la descarga. attemp: ' + str(attemp))
-                        if attemp > 6:
+                        log.warning('getDataVector: Reintentando la descarga. attemp: ' + str(attemp) + ' en ' + str(retrySeconds) + 'seg.')
+                        if attemp > 3:
                             # En los ultimos tres intentos dormir el proceso diez segundos
-                            time.sleep(10)
+                            time.sleep(retrySeconds)
+                            retrySeconds = retrySeconds + 5
                         continue    
                 log.error('getDataVector: No se pudo realizar la descarga de datos : ' + fname + ', var: ' + var)
                 raise
@@ -500,13 +515,16 @@ class gfsData(gfsConfig):
                  trange (tiempo) , irange (longitud) , jrange (latitud)
                 """
                 # Por default 10 intentos para descargar datos
+                retrySeconds = 10
                 for attemp in range(0,attemps):
                     try:
                         # Tratar de obtener datos del dataset remoto "fname" 
                         # Nota: el orden de las dimensiones son time,   latitudes, longitudes
-                        #                                       trange  jrange     irange
+                        #                                       trange  jrange     irange                        
                         dst = nc.Dataset(fname,'r')
+                        log.debug('getData: Abriendo dataset: ' + str(fname))
                         if (var in dst.variables):
+                            log.debug('getData: Solicitando: ' + str(var) + ' ' + str(trange) + ' ' + str(jrange) + ' ' + str(irange) )
                             rawdata = dst.variables[var][trange[0]:trange[1],jrange[0]:jrange[1],irange[0]:irange[1]]
                             log.debug('getData: Variable con shape: ' + str(rawdata.shape))
                             dst.close()
@@ -515,13 +533,14 @@ class gfsData(gfsConfig):
                             dst.close()
                             return None
                         return rawdata 
-                    except Exception ,e:
+                    except Exception as e:
                         log.warning('getData: Fallo al acceder a los datos ' + fname + ', var: ' + var)
                         log.warning('getData: Error: ' + str(e))
-                        log.warning('getData: Reintentando la descarga. attemp: ' + str(attemp))
-                        if attemp > 6:
+                        log.warning('getData: Reintentando la descarga. attemp: ' + str(attemp) + ' en ' + str(retrySeconds) + 'seg')
+                        if attemp > 3:
                             # En los ultimos tres intentos dormir el proceso diez segundos
-                            time.sleep(10) 
+                            time.sleep(retrySeconds) 
+                            retrySeconds = retrySeconds + 5
                         continue 
                 log.error('getData: No se pudo realizar la descarga de datos : ' + fname + ', var: ' + var)
                 raise 
@@ -598,7 +617,7 @@ class gfsData(gfsConfig):
                     # Obtener primero el valor de la dimension temporal del dataset fname
                     try:
                         fnlTimeVar[timecnt] = self.getDataVector(fname, 'time')   
-                    except Exception ,e:
+                    except Exception as e:
                         log.error('FNL: Fallo la descarga de la variable time del dataset: ' + str(fname))
                         return None 
                     log.info('FNL: Tiempo FNL : ' + str(fnlTimeVar[timecnt]))
@@ -606,7 +625,7 @@ class gfsData(gfsConfig):
                         try:
                             varlist[lVars[vn]][timecnt,:,:] = self.getData(fname, lVars[vn], [0,1], self.gridFNL.irange, self.gridFNL.jrange)
                             log.info('FNL: Se descargo la variable ' + lVars[vn] + ', shape: '  + str(varlist[lVars[vn]][timecnt,:,:].shape))
-                        except Exception ,e:
+                        except Exception as e:
                             log.error('FNL: Fallo la descarga de una seccion del dataset: ' + str(fname))
                             return None
 
@@ -637,8 +656,19 @@ class gfsData(gfsConfig):
                     # Sacar informacion de unidades y nombres largos del archivo de configuracion.
                     vUnit = self.getConfigValueVL('units')
                     vLN = self.getConfigValueVL('longnames')
+                    log.debug('Saving Variables: ' + str(lVars))
+                    log.debug('its units: ' + str(vUnit))
+                    log.debug('its longnames: ' + str(vLN))
                     for vi in range(len(lVars)): 
-                        dataVars[lVars[vi]] =  {'dimensions': ['time','lat','lon'] , 'attributes' : {'units' : vUnit[vi], 'long_name' : vLN[vi] , '_FillValue' : 9.999e+20 } , 'dataType' : 'f4' } 
+                        try:
+                            _units = vUnit[vi]
+                        except Exception as e:
+                            _units = 'unknown'
+                        try:
+                            _longname = vLN[vi]
+                        except Exception as e:
+                            _longname = 'unknown'
+                        dataVars[lVars[vi]] =  {'dimensions': ['time','lat','lon'] , 'attributes' : {'units' : _units, 'long_name' : _longname , '_FillValue' : 9.999e+20 } , 'dataType' : 'f4' } 
                     
                     myfile = netcdfFile()
                     netcdfFilename = 'crudosFNL_' + fnl_date_start.strftime('%Y-%m-%d') + '__' + lastFNLdate.strftime('%Y-%m-%d') + '.nc'
@@ -691,7 +721,7 @@ class gfsData(gfsConfig):
                 self.gridGFS_HD.getGFSgrid_default(fname) 
                 try:
                     gfsTimeVar = self.getDataVector(fname, 'time')
-                except Exception, e:
+                except Exception as e:
                     log.error('GFS_HD: Fallo la descarga de la variable time seccion del dataset: ' + str(fname))
                     return None
                 
@@ -717,7 +747,7 @@ class gfsData(gfsConfig):
                                 try:
                                     varlist[lVars[vn]][t,:,:] = self.getData(fname, lVars[vn], [t,t+1], self.gridGFS_HD.irange, self.gridGFS_HD.jrange)
                                     log.info('GFS_HD: Se descargo la variable ' + lVars[vn] + ', shape: '  + str(varlist[lVars[vn]][t,:,:].shape) + ' , Time step : ' + str(t)) 
-                                except Exception ,e:
+                                except Exception as e:
                                     log.error('GFS_HD: Fallo la descarga de una seccion del dataset: ' + str(fname))
                                     return None
                         else: 
