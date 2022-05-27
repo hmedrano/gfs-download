@@ -73,9 +73,11 @@ class gfsConfig:
                     else:
                         log.warning('Configuracion: ' + value + ', no existe en el archivo de configuracion!')
                         return ''
-                except:
+                except Exception as e:
+                    log.warning('getKeyValue: Se genero un error al intentar leer la llave: ' + str(key))
+                    log.warning('getKeyValue: Error: ' + str(e))
                     return ''
-                                             
+
         def getConfigValue(self,value):
                 """ 
                 Devuelve la los datos de la llave "value", para el grupo 'gfs_data'    
