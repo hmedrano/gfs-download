@@ -1,14 +1,14 @@
 import os, sys
-import shutil 
+import shutil
 import logging as log
 import numpy as np
 import netCDF4 as nc
 import gfsDownload as gD
 import datetime as dt
 
-""" 
+"""
  Script de ejecucion diario para la descarga de forzamientos meteorologicos de Nomads GFS.
- Se descargan 6 dias de datos reanalizados FNL 
+ Se descargan 6 dias de datos reanalizados FNL
 """
 
 
@@ -44,11 +44,11 @@ def main():
     else:
         # Salvar archivos en sOutDir
         if os.path.exists(os.path.join(sOutDir,sDirName)):
-            shutil.copy(fileFNL,os.path.join(sOutDir,sDirName))            
-            os.remove(fileFNL)            
+            shutil.copy(fileFNL,os.path.join(sOutDir,sDirName))
+            os.remove(fileFNL)
         else:
             os.makedirs(os.path.join(sOutDir,sDirName))
-            shutil.move(fileFNL,os.path.join(sOutDir,sDirName))            
+            shutil.move(fileFNL,os.path.join(sOutDir,sDirName))
 
     dProcessTime = dt.datetime.today() - dToday
     log.info('Termino el proceso de descarga, proceso tardo :: ' + str(dProcessTime.seconds/60) + ' minutos ' + str(dProcessTime.seconds % 60) + ' segundos' )
