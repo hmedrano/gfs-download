@@ -695,6 +695,9 @@ class gfsData(gfsConfig):
                  Recibe parametros opcionales gfs_hd_date (fecha tipo <python datetime>) que es la fecha del dataset del que se intentara hacer la descarga
                  En el parametro run_time se especifica el dataset run_time, default 0, puede ser 0 , 6 , 12 , 18
                 """
+                # Sacar informacion de unidades y nombres largos del archivo de configuracion.
+                vUnit = self.getConfigValueVL('units')
+                vLN = self.getConfigValueVL('longnames')
                 # Si no se especifica gfs_hd_date, usar hoy-1
                 if gfs_hd_date==None:
                     gfs_hd_date = dt.datetime.today() - dt.timedelta(days=1)
@@ -758,9 +761,6 @@ class gfsData(gfsConfig):
                                    ,'lon' :  { 'dimensions': ['lon']   , 'attributes' : {'units':'degree_east'}  , 'dataType' : 'f8' }  }
                         dimVarData = {'time' : gfsTimeVar , 'lat' : self.gridGFS_HD.latitudes , 'lon' : self.gridGFS_HD.longitudes }
                         dataVars= {}
-                        # Sacar informacion de unidades y nombres largos del archivo de configuracion.
-                        vUnit = self.getConfigValueVL('units')
-                        vLN = self.getConfigValueVL('longnames')
                         for vi in range(len(lVars)):
                             dataVars[lVars[vi]] =  {'dimensions': ['time','lat','lon'] , 'attributes' : {'units' : vUnit[vi], 'long_name' : vLN[vi] , '_FillValue' : 9.999e+20 } , 'dataType' : 'f4' }
 
