@@ -434,6 +434,13 @@ class gfsData(gfsConfig):
             gfs_run_time_GFS = None
             gfs_date_GFS = None
 
+            current_remote_dataset_name = None
+            current_remote_dataset = None
+
+            def __del__(self):
+                # Cerrar la conexion a un dataset remoto si es que esta activo
+                if self.current_remote_dataset:
+                    self.current_remote_dataset.close()
 
             def findForecast(self):
                 """
@@ -483,9 +490,19 @@ class gfsData(gfsConfig):
                 retrySeconds = 10
                 for attemp in range(0,attemps):
                     try:
-                        dst = nc.Dataset(fname,'r')
+
+                        if self.current_remote_dataset_name != fname:
+                            dst = nc.Dataset(fname,'r')
+                            self.current_remote_dataset_name = fname
+                            log.debug('getDataVector: Abriendo dataset: ' + str(fname))
+                            if not self.current_remote_dataset is None:
+                                self.current_remote_dataset.close()
+                            self.current_remote_dataset = dst
+                        else:
+                            dst = self.current_remote_dataset
+
                         rawdata = dst.variables[var][:]
-                        dst.close()
+                        # dst.close()
                         return rawdata
                     except Exception as e:
                         log.warning('getDataVector: Fallo al acceder a los datos ' + fname + ', var: ' + var)
@@ -510,19 +527,27 @@ class gfsData(gfsConfig):
                 retrySeconds = 10
                 for attemp in range(0,attemps):
                     try:
-                        # Tratar de obtener datos del dataset remoto "fname"
-                        # Nota: el orden de las dimensiones son time,   latitudes, longitudes
-                        #                                       trange  jrange     irange
-                        dst = nc.Dataset(fname,'r')
-                        log.debug('getData: Abriendo dataset: ' + str(fname))
+
+                        if self.current_remote_dataset_name != fname:
+                            dst = nc.Dataset(fname,'r')
+                            self.current_remote_dataset_name = fname
+                            log.debug('getData: Abriendo dataset: ' + str(fname))
+                            if not self.current_remote_dataset is None:
+                                self.current_remote_dataset.close()
+                            self.current_remote_dataset = dst
+                        else:
+                            dst = self.current_remote_dataset
+
                         if (var in dst.variables):
+                            # Nota: el orden de las dimensiones son time,   latitudes, longitudes
+                            #                                       trange  jrange     irange
                             log.debug('getData: Solicitando: ' + str(var) + ' ' + str(trange) + ' ' + str(jrange) + ' ' + str(irange) )
                             rawdata = dst.variables[var][trange[0]:trange[1],jrange[0]:jrange[1],irange[0]:irange[1]]
                             log.debug('getData: Variable con shape: ' + str(rawdata.shape))
-                            dst.close()
+                            # dst.close()
                         else:
                             log.warning('getData: Variable ' + var + ' no se encuentra en el dataset: ' + fname)
-                            dst.close()
+                            # dst.close()
                             return None
                         return rawdata
                     except Exception as e:
@@ -643,7 +668,7 @@ class gfsData(gfsConfig):
                     #             None               gridFNL.latitudes.size     gridFNL.longitudes.size
 
                     dimsA = {'time': None , 'lat': self.gridFNL.latitudes.size, 'lon': self.gridFNL.longitudes.size }
-                    dimVars = { 'time' : { 'dimensions': ['time']  , 'attributes' : {'units':'days since 0000-01-01 00:00:00', 'time_origin' : '0000-01-01 00:00:00', 'calendar' : 'ISO_GREGORIAN'} , 'dataType' : 'f8' }
+                    dimVars = { 'time' : { 'dimensions': ['time']  , 'attributes' : {'units':'days since 0001-01-01 00:00:00', 'time_origin' : '0001-01-01 00:00:00', 'calendar' : 'ISO_GREGORIAN'} , 'dataType' : 'f8' }
                                ,'lat' :  { 'dimensions': ['lat']   , 'attributes' : {'units':'degree_north'} , 'dataType' : 'f8' }
                                ,'lon' :  { 'dimensions': ['lon']   , 'attributes' : {'units':'degree_east'}  , 'dataType' : 'f8' }  }
                     dimVarData = {'time' : fnlTimeVar , 'lat' : self.gridFNL.latitudes , 'lon' : self.gridFNL.longitudes }
@@ -678,7 +703,7 @@ class gfsData(gfsConfig):
                 return netcdfFilename
 
 
-            def getGFS(self, s_dataset, gfs_hd_date=None, run_time=0, offset=-1, saveData=True):
+            def downloadGFS(self, s_dataset, gfs_hd_date=None, run_time=0, offset=-1, saveData=True):
                 """
                  Descarga datos del dataset especificado en s_dataset (gfs_hd, gfs_0p25 o gfs_0p50), por default toda la dimension
                  temporal del dataset (today-1), runtime=00z.
@@ -756,7 +781,7 @@ class gfsData(gfsConfig):
                         # Dimensiones time(unlimited),   lat,                       lon
                         #             None               gridFNL.latitudes.size     gridFNL.longitudes.size
                         dimsA = {'time': None , 'lat': self.gridGFS_HD.latitudes.size, 'lon': self.gridGFS_HD.longitudes.size }
-                        dimVars = { 'time' : { 'dimensions': ['time']  , 'attributes' : {'units':'days since 0000-01-01 00:00:00', 'time_origin' : '0000-01-01 00:00:00', 'calendar' : 'ISO_GREGORIAN'} , 'dataType' : 'f8' }
+                        dimVars = { 'time' : { 'dimensions': ['time']  , 'attributes' : {'units':'days since 0001-01-01 00:00:00', 'time_origin' : '0001-01-01 00:00:00', 'calendar' : 'ISO_GREGORIAN'} , 'dataType' : 'f8' }
                                    ,'lat' :  { 'dimensions': ['lat']   , 'attributes' : {'units':'degree_north'} , 'dataType' : 'f8' }
                                    ,'lon' :  { 'dimensions': ['lon']   , 'attributes' : {'units':'degree_east'}  , 'dataType' : 'f8' }  }
                         dimVarData = {'time' : gfsTimeVar , 'lat' : self.gridGFS_HD.latitudes , 'lon' : self.gridGFS_HD.longitudes }

@@ -46,7 +46,7 @@ def main():
     fileFNL = myData.downloadFNL(dToday - dt.timedelta(days=2))
     log.info('Se descargo datos del catalogo FNL en el archivo ::: ' + str(fileFNL))
 
-    fileGFS = myData.getGFS('gfs_0p25', dToday - dt.timedelta(days=1))
+    fileGFS = myData.downloadGFS('gfs_0p25', dToday - dt.timedelta(days=1))
     log.info('Se descargo datos del catalogo GFS en el archivo :: ' + str(fileGFS))
 
     # Verificar que la informacion exista en sitio

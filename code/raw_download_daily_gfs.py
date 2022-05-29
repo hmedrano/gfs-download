@@ -37,7 +37,7 @@ def main():
     log.info('Iniciando descarga de la fecha: ' + str(dToday))
 
     ## Descargamos datos y generamos archivos crudos.
-    fileGFS = myData.getGFS('gfs_0p25', dToday - dt.timedelta(days=1))
+    fileGFS = myData.downloadGFS('gfs_0p25', dToday - dt.timedelta(days=1))
     log.info('Se descargo datos del catalogo GFS en el archivo :: ' + str(fileGFS))
 
     # Verificar que la informacion exista en sitio
