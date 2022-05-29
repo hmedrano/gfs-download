@@ -18,5 +18,13 @@ Este script automatiza la descarga de los productos de NCEP de pronostico e hinc
 python raw_download_daily.py
 ```
 
+Es posible especificar la fecha a partir de la cual descarga datos: (Ej.)
+
+```
+python raw_download_daily 20220528
+# Lo anterior descarga datos de FNL a partir de 20220528 - 2dias
+# Descarga datos de GFS a partir de 20220528 - 1dias
+```
+
 
 

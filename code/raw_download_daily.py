@@ -1,26 +1,35 @@
 import os, sys
-import shutil 
+import shutil
 import logging as log
 import numpy as np
 import netCDF4 as nc
 import gfsDownload as gD
 import datetime as dt
-# import notification
 
-""" 
+
+"""
  Script de ejecucion diario para la descarga de forzamientos meteorologicos de Nomads GFS.
  Se descargan 6 dias de datos reanalizados FNL y el pronostico de 6 dias del dataset GFS_HD.
- La informacion se almacena en archivos netcdf, uno para FNL y otro para GFS_HD, cada uno con 
- distinta resolucion espacial y temporal. 
+ La informacion se almacena en archivos netcdf, uno para FNL y otro para GFS_HD, cada uno con
+ distinta resolucion espacial y temporal.
 
- By Favio Medrano Julio 2014.
+ Uso:
+
+  # Descarga a partir de la fecha de hoy.
+  > python raw_download_daily
+
+
+  # Es posible especificar un fecha:
+  > python raw_download_daily 20220528
+
+  # Lo anterior descarga datos de FNL a partir de 20220528 - 2dias
+  # Descarga datos de GFS a partir de 20220528 - 1dias
+
 """
 
 def failNotification(message='Fallo en la descarga'):
     # TODO Add notification system
-    # msg = 'Fecha ' + str(sDirName) + '\nAlguno de los siguientes archivos no se generaron:\n' + fileFNL + '\n' + fileGFS + '\n'
-    log.warning('Enviando notificacion: ' + message)    
-    # notification.send('Kanik2 GFS Download Status',msg)
+    log.error('Enviando notificacion: ' + message)
 
 def main():
 
@@ -29,7 +38,7 @@ def main():
     sLogFile = 'rawdownload.log'
 
     os.chdir(sWorkingDir)
-    log.basicConfig(filename=sLogFile, level=log.DEBUG,)
+    log.basicConfig(filename=sLogFile, level=log.INFO,)
 
     if len(sys.argv) > 1:
         print (sys.argv[1])
