@@ -25,13 +25,12 @@ def fixtimeunits(ncFile):
     dst.close()
     print ('Updated time values and units, to "seconds since 1970-01-01 00:00:00" ')
     print ('Times: ' + str(timedts))
-  
+
 
 if __name__ == "__main__":
-  if len(sys.argv) > 1:        
+  if len(sys.argv) > 1:
     ncFile = sys.argv[1]
   else:
     print('Incluya el nombre del archivo a arreglar')
 
   fixtimeunits(ncFile)
-    
