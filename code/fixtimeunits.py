@@ -1,3 +1,13 @@
+'''
+Herramienta de linea de comandos para convertir archivos netcdf con unidades
+de tiempo "days since 0001-01-01 00:00:00" a "seconds since 1970-01-01 00:00:00"
+
+Uso:
+
+ > python fixtimeunits.py out/20220528/crudosGFS_0P25_2022-05-28_00z.nc
+
+'''
+
 import sys
 import netCDF4 as nc
 import datetime as dt
@@ -25,6 +35,7 @@ def fixtimeunits(ncFile):
     dst.close()
     print ('Updated time values and units, to "seconds since 1970-01-01 00:00:00" ')
     print ('Times: ' + str(timedts))
+
 
 
 if __name__ == "__main__":
